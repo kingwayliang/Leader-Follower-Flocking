@@ -1,2 +1,5 @@
 # Leader-Follower-Flocking
-install dependence via pip install -r requirements.txt
+install dependencies by running
+```bash
+pip install -r requirements.txt
+```
