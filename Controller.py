@@ -1,6 +1,7 @@
 import numpy as np
 
 from Params import *
+from Obstacle import *
 
 
 class Controller:
@@ -15,7 +16,10 @@ class Controller:
         self.robot_pos = robot_pos
         self.nl = num_leader
         self.nf = num_follower
-        self.obstacles = obstacles
+        if obstacles:
+            self.obs_dist_calc = ObstacleDistanceCalculator(obstacles)
+        else:
+            self.obs_dist_calc = None
 
     def update(self, leader_displ):
         '''
