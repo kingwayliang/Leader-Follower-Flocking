@@ -11,14 +11,13 @@ class Controller:
     def __init__(self, robot_pos, num_leader, num_follower, obstacles=None):
         '''
         robot_pos: np array of size (num_robot, D), leader first, then follower
-        robot_vel: same size as robot_pos
         '''
         self.robot_pos = robot_pos
         self.nl = num_leader
         self.nf = num_follower
         self.obstacles = obstacles
 
-    def update(self, leader_vel):
+    def update(self, leader_displ):
         '''
         This function should directly update self.robot_pos and return displacement of followers
         '''
@@ -26,10 +25,10 @@ class Controller:
 
 
 class DummyController(Controller):
-    def update(self, leader_vel):
+    def update(self, leader_displ):
         follower_disp = (self.robot_pos[0, :] -
                          self.robot_pos[self.nl:, :]) * 0.05
-        self.robot_pos += np.row_stack((leader_vel, follower_disp))
+        self.robot_pos += np.row_stack((leader_displ, follower_disp))
         return follower_disp
 
 
@@ -45,9 +44,7 @@ class PotentialController(Controller):
         self.ks = 600000
         print(robot_pos)
 
-    def update(self, leader_vel=None):
-        if leader_vel is not None:
-            self.robot_pos[:self.nl, :] += leader_vel
+    def update(self, leader_displ):
         dist_mat = np.linalg.norm(
             self.robot_pos - np.expand_dims(self.robot_pos, axis=1), axis=2)
         control_input = np.zeros((self.nf, 2))
@@ -59,4 +56,5 @@ class PotentialController(Controller):
                     control_input[fi] += (-self.ka + self.ks / (d - self.d1)
                                           ** 2 / d) * (self.robot_pos[f] - self.robot_pos[i])
         self.robot_pos[self.nl:, :] += control_input * self.time_interval
+        self.robot_pos[:self.nl, :] += leader_displ
         return control_input * self.time_interval
