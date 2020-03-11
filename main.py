@@ -25,7 +25,7 @@ if __name__ == "__main__":
     follower_pos = np.column_stack(((np.arange(
         nf) + 1) * init_separation, screen_size[1] - np.ones(nf) * init_separation))
 
-    control = DummyController(
+    control = PotentialController(
         np.row_stack((leader_pos, follower_pos)), nl, nf)
 
     vis = Visualizer(window, control, nl, nf, leader_pos, follower_pos)

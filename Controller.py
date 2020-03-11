@@ -38,11 +38,12 @@ class PotentialController(Controller):
         super().__init__(robot_pos, num_leader, num_follower, obstacles)
         self.num_robots = num_leader + num_follower
         self.timestep = 0
-        self.time_interval = 0.05
-        self.d1 = 2000
-        self.d2 = 0
+        self.time_interval = 0.005
+        self.d1 = 0
+        self.d2 = ROBOT_RADIUS * 2
         self.ka = 1
-        self.ks = 0.2
+        self.ks = 600000
+        print(robot_pos)
 
     def update(self, leader_vel=None):
         if leader_vel is not None:
@@ -58,4 +59,4 @@ class PotentialController(Controller):
                     control_input[fi] += (-self.ka + self.ks / (d - self.d1)
                                           ** 2 / d) * (self.robot_pos[f] - self.robot_pos[i])
         self.robot_pos[self.nl:, :] += control_input * self.time_interval
-        return control_input
+        return control_input * self.time_interval
