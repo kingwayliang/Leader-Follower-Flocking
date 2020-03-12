@@ -38,12 +38,13 @@ if __name__ == "__main__":
     leader_pos = robot_pos[:2]
     follower_pos = robot_pos[2:]
     
-    obs1 = RectangularObstacle(500, 800, 100, 300)
-    obs2 = RectangularObstacle(500, 800, 400, 600)
+    obs1 = CircularObstacle(1000, 200, 50)
+    obs2 = CircularObstacle(1000, 400, 100)
+    
     obs3 = CircularObstacle(1000, 800, 50)
     obstacles = [obs1, obs2, obs3]
 
-    control = SmallRangeController(
+    control = FlockCenterController(
         np.row_stack((leader_pos, follower_pos)), nl, nf, obstacles=obstacles)
 
     vis = Visualizer(window, control, nl, nf, leader_pos,
