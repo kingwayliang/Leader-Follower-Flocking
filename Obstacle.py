@@ -37,7 +37,7 @@ class RectangularObstacle(Obstacle):
         self.color = color
 
 
-class ObstacleDistanceCalculator:
+class ObstacleOffsetCalculator:
     def __init__(self, obstacles):
         self.circle_centers = np.zeros((1, D, 0))
         self.rect_centers = np.zeros((1, D, 0))
@@ -58,21 +58,37 @@ class ObstacleDistanceCalculator:
                 self.rect_halfwh = np.append(self.rect_halfwh, halfwh, axis=2)
         self.circle_radii = np.expand_dims(np.array(radii), axis=0)
 
-    def dist_to_cir(self, robot_pos):
+    def offset_from_cir(self, robot_pos):
         '''
         robot_pos: pos of robot for distances, should be followers
-        returns dist of size (num_robot, num_circles)
-        radius already accounted for
+        returns vector from closest point on circle to robot
+        return size (num_robot, num_circle, D)
         '''
         diff = np.expand_dims(robot_pos, 2) - self.circle_centers
-        return np.linalg.norm(diff, axis=1) - self.circle_radii
+        dist_from_center = np.linalg.norm(diff, axis=1)
+        dist_from_closest = dist_from_center - self.circle_radii
+        scaling = dist_from_closest / dist_from_center
+        diff = np.swapaxes(diff, 1, 2)
+        return diff * np.expand_dims(scaling, 2)
 
-    def dist_to_rect(self, robot_pos):
+    def offset_from_rect(self, robot_pos):
         '''
         robot_pos: pos of robot for distances, should be followers
-        returns dist of size (num_robot, num_circles)
+        returns vector from closest point on rectangle to robot
+        return size (num_robot, num_rect, D)
         '''
-        diff = np.abs(np.expand_dims(robot_pos, 2) -
-                      self.rect_centers) - self.rect_halfwh
-        diff = np.maximum(diff, 0)
-        return np.linalg.norm(diff, axis=1)
+        diff_from_center = np.expand_dims(robot_pos, 2) - self.rect_centers
+        sign = np.sign(diff_from_center)
+        diff = np.abs(diff_from_center) - self.rect_halfwh
+        diff = np.maximum(diff, 0) * sign
+        return np.swapaxes(diff, 1, 2)
+
+    def offset_from_obstacles(self, robot_pos):
+        '''
+        robot_pos: pos of robot for distances, should be followers
+        returns vector from closest point on obstacle to robot
+        return size (num_robot, num_obstacle, D)
+        '''
+        ofs_cir = self.offset_from_cir(robot_pos)
+        ofs_rec = self.offset_from_rect(robot_pos)
+        return np.concatenate([ofs_cir, ofs_rec], axis=1)
