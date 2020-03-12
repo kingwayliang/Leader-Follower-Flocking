@@ -22,6 +22,15 @@ class Visualizer:
         self.nf = num_follower
         self.obstacles = obstacles
 
+        if obstacles:
+            for obs in obstacles:
+                if obs.obs_type == CIRCLE:
+                    self.can.create_oval(obs.x-obs.radius, obs.y-obs.radius, obs.x +
+                                         obs.radius, obs.y+obs.radius, fill=obs.color, outline=obs.color)
+                if obs.obs_type == RECTANGLE:
+                    self.can.create_rectangle(
+                        obs.x1, obs.y1, obs.x2, obs.y2, fill=obs.color, outline=obs.color)
+
         # ids for interaction in canvas
         self.leader_id = [self.can.create_oval(
             leader_pos[i][0] - ROBOT_RADIUS,

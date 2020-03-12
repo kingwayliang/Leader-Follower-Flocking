@@ -7,7 +7,8 @@ Shared
 '''
 D = 2
 ROBOT_RADIUS = 10
-
+CIRCLE = "circle"
+RECTANGLE = "rectangle"
 '''
 Simulation
 '''

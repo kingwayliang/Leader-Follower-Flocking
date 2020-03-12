@@ -5,6 +5,7 @@ from tkinter import *
 from Params import *
 from Visualization import *
 from Controller import *
+from Obstacle import *
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -37,8 +38,14 @@ if __name__ == "__main__":
     leader_pos = robot_pos[:2]
     follower_pos = robot_pos[2:]
     
-    control = SmallRangeController(
-        np.row_stack((leader_pos, follower_pos)), nl, nf)
+    obs1 = RectangularObstacle(500, 800, 100, 300)
+    obs2 = RectangularObstacle(500, 800, 400, 600)
+    obs3 = CircularObstacle(1000, 800, 50)
+    obstacles = [obs1, obs2, obs3]
 
-    vis = Visualizer(window, control, nl, nf, leader_pos, follower_pos)
+    control = SmallRangeController(
+        np.row_stack((leader_pos, follower_pos)), nl, nf, obstacles=obstacles)
+
+    vis = Visualizer(window, control, nl, nf, leader_pos,
+                     follower_pos, obstacles=obstacles)
     vis.run()
