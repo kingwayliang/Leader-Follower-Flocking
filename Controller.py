@@ -54,14 +54,15 @@ class PotentialController(Controller):
         for f in range(self.nl, self.num_robots):
             for i in range(self.num_robots):
                 d = dist_mat[f, i]
-                if f != i:  
+                if f != i and d < SENSING_RANGE:
                     fi = f - self.nl
                     control_input[fi] += (-self.ka + self.ks / (d - self.d1)
                                           ** 2 / d) * (self.robot_pos[f] - self.robot_pos[i])
         self.robot_pos[self.nl:, :] += control_input * self.time_interval
         self.robot_pos[:self.nl, :] += leader_displ
         return control_input * self.time_interval
- 
+
+
 class FlockCenterController(Controller):
     def __init__(self, robot_pos, num_leader, num_follower, obstacles=None):
         super().__init__(robot_pos, num_leader, num_follower, obstacles)
@@ -69,7 +70,7 @@ class FlockCenterController(Controller):
         self.num_robots = num_leader + num_follower
         self.time_interval = 0.004
         self.d1 = 0
-        self.d2 = ROBOT_RADIUS * 10
+        self.d2 = ROBOT_RADIUS * 30
         self.ka = 1.5
         self.ks = 600000
         self.kc = 0.1
@@ -82,7 +83,7 @@ class FlockCenterController(Controller):
         # update flock centers
         delta_centers = np.zeros((self.num_robots, 2))
         for i in range(self.num_robots):
-            delta_centers[i] += self.robot_pos[i] - self.centers[i] 
+            delta_centers[i] += self.robot_pos[i] - self.centers[i]
             for j in range(self.num_robots):
                 if i != j and dist_mat[i, j] < self.d2:
                     delta_centers[i] += self.centers[j] - self.centers[i]
@@ -91,24 +92,26 @@ class FlockCenterController(Controller):
         # calculate control input
         obs_offset = None
         if self.obs_offset_calc:
-            obs_offset = self.obs_offset_calc.offset_from_obstacles(self.robot_pos)
+            obs_offset = self.obs_offset_calc.offset_from_obstacles(
+                self.robot_pos)
             obs_dist = np.linalg.norm(obs_offset, axis=2)
         control_input = np.zeros((self.nf, 2))
         for f in range(self.nl, self.num_robots):
             # attraction to flock center
-            control_input[f - self.nl] += self.ka * np.linalg.norm((self.centers[f] - self.robot_pos[f])) * (self.centers[f] - self.robot_pos[f])
+            control_input[f - self.nl] += self.ka * np.linalg.norm(
+                (self.centers[f] - self.robot_pos[f])) * (self.centers[f] - self.robot_pos[f])
             # sparation
             if obs_offset is not None:
                 for o in range(obs_offset.shape[1]):
                     d = obs_dist[f, o]
                     sparate_force = self.ks / (d - self.d1) ** 2 / d
-                    control_input[f - self.nl] += sparate_force * obs_offset[f, o]
+                    control_input[f - self.nl] += sparate_force * \
+                        obs_offset[f, o]
             for i in range(self.num_robots):
                 d = dist_mat[f, i]
                 if i != f:
                     sparate_force = self.ks / (d - self.d1) ** 2 / d
-                    control_input[f - self.nl] += sparate_force * (self.robot_pos[f] - self.robot_pos[i])
+                    control_input[f - self.nl] += sparate_force * \
+                        (self.robot_pos[f] - self.robot_pos[i])
         self.robot_pos[self.nl:, :] += control_input * self.time_interval
         return control_input * self.time_interval
- 
-    

@@ -71,37 +71,37 @@ class Visualizer:
             self.window.bind("<KeyRelease-s>", self.ws_release)
 
     def left(self, event):
-        self.leader_displ[0][0] = -5
+        self.leader_displ[0][0] = -LEADER_VEL
 
     def right(self, event):
-        self.leader_displ[0][0] = 5
+        self.leader_displ[0][0] = LEADER_VEL
 
     def h_release(self, event):
         self.leader_displ[0][0] = 0
 
     def up(self, event):
-        self.leader_displ[0][1] = -5
+        self.leader_displ[0][1] = -LEADER_VEL
 
     def down(self, event):
-        self.leader_displ[0][1] = 5
+        self.leader_displ[0][1] = LEADER_VEL
 
     def v_release(self, event):
         self.leader_displ[0][1] = 0
 
     def key_a(self, event):
-        self.leader_displ[1][0] = -5
+        self.leader_displ[1][0] = -LEADER_VEL
 
     def key_d(self, event):
-        self.leader_displ[1][0] = 5
+        self.leader_displ[1][0] = LEADER_VEL
 
     def ad_release(self, event):
         self.leader_displ[1][0] = 0
 
     def key_w(self, event):
-        self.leader_displ[1][1] = -5
+        self.leader_displ[1][1] = -LEADER_VEL
 
     def key_s(self, event):
-        self.leader_displ[1][1] = 5
+        self.leader_displ[1][1] = LEADER_VEL
 
     def ws_release(self, event):
         self.leader_displ[1][1] = 0
