@@ -50,9 +50,11 @@ if __name__ == "__main__":
         obstacles = [obs1, obs2, obs3]
 
     if args.ct == "flock":
-
         control = FlockCenterController(
             np.row_stack((leader_pos, follower_pos)), nl, nf, obstacles=obstacles)
+    elif args.ct == "connect":
+        control = ConnectivityMaintenanceController(
+            robot_pos, nl, nf, obstacles)
     else:
         control = PotentialController(robot_pos, nl, nf, obstacles=obstacles)
 

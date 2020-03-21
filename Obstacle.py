@@ -38,6 +38,13 @@ class RectangularObstacle(Obstacle):
 
 
 class ObstacleOffsetCalculator:
+    '''
+    Utility class for calculating position vector pointing from
+    closest point on obstacles to each robot. Init with list of
+    obstacles, call offset_from_obstacles with related robot
+    positions to get a (num_robot, num_obstacle, D) matrix
+    '''
+
     def __init__(self, obstacles):
         self.circle_centers = np.zeros((1, D, 0))
         self.rect_centers = np.zeros((1, D, 0))

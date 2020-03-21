@@ -2,6 +2,7 @@ import numpy as np
 
 from Params import *
 from Obstacle import *
+from Util import *
 
 
 class Controller:
@@ -37,6 +38,10 @@ class DummyController(Controller):
 
 
 class PotentialController(Controller):
+    '''
+    Repulsive potential for obstacle avoidance + position consensus
+    '''
+
     def __init__(self, robot_pos, num_leader, num_follower, obstacles=None):
         super().__init__(robot_pos, num_leader, num_follower, obstacles)
         self.num_robots = num_leader + num_follower
@@ -45,7 +50,6 @@ class PotentialController(Controller):
         self.d2 = ROBOT_RADIUS * 2
         self.ka = 1
         self.ks = 600000
-        print(robot_pos)
 
     def update(self, leader_displ):
         dist_mat = np.linalg.norm(
@@ -64,6 +68,10 @@ class PotentialController(Controller):
 
 
 class FlockCenterController(Controller):
+    '''
+    Repulsive potential for obstacle avoidance + flock center consensus
+    '''
+
     def __init__(self, robot_pos, num_leader, num_follower, obstacles=None):
         super().__init__(robot_pos, num_leader, num_follower, obstacles)
         self.centers = robot_pos.copy()
@@ -78,8 +86,7 @@ class FlockCenterController(Controller):
     def update(self, leader_vel=None):
         if leader_vel is not None:
             self.robot_pos[:self.nl, :] += leader_vel
-        dist_mat = np.linalg.norm(
-            self.robot_pos - np.expand_dims(self.robot_pos, axis=1), axis=2)
+        dist_mat = distanceMatrix(self.robot_pos)
         # update flock centers
         delta_centers = np.zeros((self.num_robots, 2))
         for i in range(self.num_robots):
@@ -115,3 +122,23 @@ class FlockCenterController(Controller):
                         (self.robot_pos[f] - self.robot_pos[i])
         self.robot_pos[self.nl:, :] += control_input * self.time_interval
         return control_input * self.time_interval
+
+
+class ConnectivityMaintenanceController(Controller):
+    def update(self, leader_displ):
+        dist_mat = distanceMatrix(self.robot_pos) + EPSILON
+        # coeff = (dist_mat - DESIRED_DISTANCE) / (DESIRED_DISTANCE * dist_mat ** 4) + \
+        #     ((1/(dist_mat) - 1/DESIRED_DISTANCE) /
+        #      (SENSING_RANGE ** 2 - dist_mat ** 2 + EPSILON)) ** 2
+        coeff = (DESIRED_DISTANCE - dist_mat) * (2*DESIRED_DISTANCE*(dist_mat**2) - dist_mat**3 - DESIRED_DISTANCE *
+                                                 SENSING_RANGE**2)/(DESIRED_DISTANCE**2 * dist_mat**3 * (SENSING_RANGE**2 - dist_mat**2) ** 2)
+        mask = (dist_mat <= SENSING_RANGE).astype(int)
+        coeff *= mask
+        # degrees = np.sum(A, axis=1)
+        # L = A - np.diag(degrees)
+        # coeff *= L
+        # coeff -= np.diag(degrees)
+        diff = self.robot_pos - np.expand_dims(self.robot_pos, axis=1)
+        control = np.sum(diff * np.expand_dims(coeff, axis=2), axis=1)
+        self.robot_pos[:self.nl, :] += leader_displ
+        return control[self.nl:, :] * -10000000
