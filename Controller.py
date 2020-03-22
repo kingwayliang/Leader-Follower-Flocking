@@ -143,3 +143,16 @@ class ConnectivityMaintenanceController(Controller):
         self.robot_pos[:self.nl, :] += leader_displ
         self.robot_pos[self.nl:, :] += control[self.nl:, :] * 10000000
         return control[self.nl:, :] * 10000000
+
+
+class CubicController(Controller):
+    def update(self, leader_displ):
+        dist_mat = distanceMatrix(self.robot_pos)
+        coeff = (dist_mat - DESIRED_DISTANCE) ** 3
+        mask = (dist_mat <= SENSING_RANGE).astype(int)
+        coeff *= mask
+        diff = self.robot_pos - np.expand_dims(self.robot_pos, axis=1)
+        control = np.sum(diff * np.expand_dims(coeff, axis=2), axis=1)
+        self.robot_pos[:self.nl, :] += leader_displ
+        self.robot_pos[self.nl:, :] += control[self.nl:, :] / 10000000
+        return control[self.nl:, :] / 10000000

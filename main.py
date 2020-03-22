@@ -55,6 +55,8 @@ if __name__ == "__main__":
     elif args.ct == "connect":
         control = ConnectivityMaintenanceController(
             robot_pos, nl, nf, obstacles)
+    elif args.ct == "cubic":
+        control = CubicController(robot_pos, nl, nf, obstacles)
     else:
         control = PotentialController(robot_pos, nl, nf, obstacles=obstacles)
 
