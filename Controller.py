@@ -141,4 +141,5 @@ class ConnectivityMaintenanceController(Controller):
         diff = self.robot_pos - np.expand_dims(self.robot_pos, axis=1)
         control = np.sum(diff * np.expand_dims(coeff, axis=2), axis=1)
         self.robot_pos[:self.nl, :] += leader_displ
-        return control[self.nl:, :] * -10000000
+        self.robot_pos[self.nl:, :] += control[self.nl:, :] * 10000000
+        return control[self.nl:, :] * 10000000
