@@ -72,7 +72,7 @@ class ObstacleOffsetCalculator:
         return size (num_robot, num_circle, D)
         '''
         diff = np.expand_dims(robot_pos, 2) - self.circle_centers
-        dist_from_center = np.linalg.norm(diff, axis=1)
+        dist_from_center = np.linalg.norm(diff, axis=1) + EPSILON
         dist_from_closest = dist_from_center - self.circle_radii
         scaling = dist_from_closest / dist_from_center
         diff = np.swapaxes(diff, 1, 2)

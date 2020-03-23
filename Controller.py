@@ -52,8 +52,7 @@ class PotentialController(Controller):
         self.ks = 600000
 
     def update(self, leader_displ):
-        dist_mat = np.linalg.norm(
-            self.robot_pos - np.expand_dims(self.robot_pos, axis=1), axis=2)
+        dist_mat = distanceMatrix(self.robot_pos)
         control_input = np.zeros((self.nf, 2))
         for f in range(self.nl, self.num_robots):
             for i in range(self.num_robots):
@@ -62,6 +61,15 @@ class PotentialController(Controller):
                     fi = f - self.nl
                     control_input[fi] += (-self.ka + self.ks / (d - self.d1)
                                           ** 2 / d) * (self.robot_pos[f] - self.robot_pos[i])
+        if self.obs_offset_calc:
+            obs_offset = self.obs_offset_calc.offset_from_obstacles(
+                self.robot_pos[self.nl:, :])
+            obs_dist = np.linalg.norm(obs_offset, axis=2) + EPSILON
+            mask = (obs_dist <= SENSING_RANGE).astype(int)
+            gain = 1 / ((obs_dist - ROBOT_RADIUS) ** 2) * mask
+            control_input += 5000 * np.sum(obs_offset *
+                                           np.expand_dims(gain, axis=2), axis=1)
+
         self.robot_pos[self.nl:, :] += control_input * self.time_interval
         self.robot_pos[:self.nl, :] += leader_displ
         return control_input * self.time_interval
@@ -125,8 +133,12 @@ class FlockCenterController(Controller):
 
 
 class ConnectivityMaintenanceController(Controller):
+    def __init__(self, robot_pos, num_leader, num_follower, obstacles=None):
+        super().__init__(robot_pos, num_leader, num_follower, obstacles)
+        self.eps_diag = np.diag([EPSILON] * (self.nl + self.nf))
+
     def update(self, leader_displ):
-        dist_mat = distanceMatrix(self.robot_pos) + EPSILON
+        dist_mat = distanceMatrix(self.robot_pos) + self.eps_diag
         # coeff = (dist_mat - DESIRED_DISTANCE) / (DESIRED_DISTANCE * dist_mat ** 4) + \
         #     ((1/(dist_mat) - 1/DESIRED_DISTANCE) /
         #      (SENSING_RANGE ** 2 - dist_mat ** 2 + EPSILON)) ** 2
@@ -146,13 +158,28 @@ class ConnectivityMaintenanceController(Controller):
 
 
 class CubicController(Controller):
+    def __init__(self, robot_pos, num_leader, num_follower, obstacles=None):
+        super().__init__(robot_pos, num_leader, num_follower, obstacles)
+        self.eps_diag = np.diag([EPSILON] * (self.nl + self.nf))
+
     def update(self, leader_displ):
-        dist_mat = distanceMatrix(self.robot_pos)
+        dist_mat = distanceMatrix(self.robot_pos) + self.eps_diag
         coeff = (dist_mat - DESIRED_DISTANCE) ** 3
         mask = (dist_mat <= SENSING_RANGE).astype(int)
-        coeff *= mask
+        coeff *= mask / dist_mat
         diff = self.robot_pos - np.expand_dims(self.robot_pos, axis=1)
-        control = np.sum(diff * np.expand_dims(coeff, axis=2), axis=1)
+        control = np.sum(diff * np.expand_dims(coeff, axis=2),
+                         axis=1)[self.nl:, :]
+
+        if self.obs_offset_calc:
+            obs_offset = self.obs_offset_calc.offset_from_obstacles(
+                self.robot_pos[self.nl:, :])
+            obs_dist = np.linalg.norm(obs_offset, axis=2) + EPSILON
+            mask = (obs_dist <= SENSING_RANGE).astype(int)
+            gain = 1 / ((obs_dist - ROBOT_RADIUS) ** 2) * mask
+            control += 1000000 * np.sum(obs_offset *
+                                        np.expand_dims(gain, axis=2), axis=1)
+
         self.robot_pos[:self.nl, :] += leader_displ
-        self.robot_pos[self.nl:, :] += control[self.nl:, :] / 10000000
-        return control[self.nl:, :] / 10000000
+        self.robot_pos[self.nl:, :] += control / 1000000
+        return control / 1000000

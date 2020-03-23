@@ -107,7 +107,12 @@ class Visualizer:
         self.leader_displ[1][1] = 0
 
     def movement(self):
-        self.follower_displ = self.follower_control.update(self.leader_displ)
+        try:
+            self.follower_displ = self.follower_control.update(
+                self.leader_displ)
+        except:
+            self.follower_displ = np.zeros((self.nf, D))
+
         for i in range(self.nf):
             self.can.move(
                 self.follower_id[i], self.follower_displ[i][0], self.follower_displ[i][1])
