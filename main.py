@@ -36,8 +36,9 @@ if __name__ == "__main__":
     obs4 = RectangularObstacle(1200, 1400, 200, 300)
     obs5 = RectangularObstacle(1200, 1400, 370, 450)
     obs6 = RectangularObstacle(1200, 1400, 550, 650)
+    obs7 = RectangularObstacle(100, 300, 650, 700)
     if args.ob:
-        obstacles = [obs1, obs2, obs3, obs4, obs5, obs6]
+        obstacles = [obs1, obs2, obs3, obs4, obs5, obs6, obs7]
     else:
         obstacles = None
 

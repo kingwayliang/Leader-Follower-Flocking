@@ -90,6 +90,7 @@ class FlockCenterController(Controller):
         self.ka = 1.5
         self.ks = 600000
         self.kc = 0.1
+        self.kconnect = 0.5
 
     def update(self, leader_vel=None):
         if leader_vel is not None:
@@ -124,8 +125,9 @@ class FlockCenterController(Controller):
                         obs_offset[f, o]
             for i in range(self.num_robots):
                 d = dist_mat[f, i]
-                if i != f:
+                if i != f and d < SENSING_RANGE:
                     sparate_force = self.ks / (d - self.d1) ** 2 / d
+                    # connect_force = self.kconnect / (SENSING_RANGE - d)
                     control_input[f - self.nl] += sparate_force * \
                         (self.robot_pos[f] - self.robot_pos[i])
         self.robot_pos[self.nl:, :] += control_input * self.time_interval
@@ -163,7 +165,7 @@ class CubicController(Controller):
         self.eps_diag = np.diag([EPSILON] * (self.nl + self.nf))
 
     def update(self, leader_displ):
-        dist_mat = distanceMatrix(self.robot_pos) + self.eps_diag
+        dist_mat = distanceMatrix(self.robot_pos) - 2 * ROBOT_RADIUS
         coeff = (dist_mat - DESIRED_DISTANCE) ** 3
         mask = (dist_mat <= SENSING_RANGE).astype(int)
         coeff *= mask / dist_mat
@@ -177,7 +179,7 @@ class CubicController(Controller):
             obs_dist = np.linalg.norm(obs_offset, axis=2) + EPSILON
             mask = (obs_dist <= SENSING_RANGE).astype(int)
             gain = 1 / ((obs_dist - ROBOT_RADIUS) ** 2) * mask
-            control += 1000000 * np.sum(obs_offset *
+            control += 5000000 * np.sum(obs_offset *
                                         np.expand_dims(gain, axis=2), axis=1)
 
         self.robot_pos[:self.nl, :] += leader_displ
